@@ -1,0 +1,76 @@
+from sortedcontainers import SortedList
+from english_words import get_english_words_set
+import string
+import random
+
+
+def load_web2_words():
+	return get_english_words_set(['web2'], lower=True, alpha=True)
+
+def load_words_from_file(file='words_list.txt'):
+	with open(file) as word_file:
+		valid_words = set(word_file.read().split())
+	return valid_words
+
+def gen_random_puzzle():
+	vowels = ['A', 'E', 'I', 'O', 'U']
+	# guarantee at least 2 vowels for playability
+	letters = random.sample(vowels, 2)
+	letters.extend(random.sample(string.ascii_uppercase, 7))
+	letters = list(set(letters))[:7]
+	return letters
+
+def main():
+	print("Welcome to Speling Be!")
+	# generate puzzle
+	letters = gen_random_puzzle()
+	req_letter = letters[0].lower()
+	letters_lower = [l.lower() for l in letters]
+	puzzle_repr = f"\t  {letters[3]}  {letters[1]}\n\t{letters[2]}  {letters[0]}  {letters[4]}\n\t  {letters[5]}  {letters[6]}"
+	# get solutions
+	# valid_words = load_web2_words()
+	valid_words = load_words_from_file("words_list.txt")
+	min_word_len = 4
+	possible_words = SortedList([word for word in valid_words if (len(word)>=min_word_len and all(char in letters_lower for char in word) and req_letter in word)])
+	found_words = []
+	print(puzzle_repr, f"\nThere are {len(possible_words)} possible words")
+	# main gameplay loop
+	while True:
+		cmd = input("> ").strip().lower()
+		if cmd[:2] == ":h":
+			help_text = "available commands:\n\t:c cheat\n\t:h help (this page)\n\t:l display letters in the puzzle\n\t:q quit\n\t:w display words already found"
+			print(help_text)
+		elif cmd[:2] == ":l":
+			print(puzzle_repr)
+		elif cmd[:2] == ":q":
+			print("Goodbye!")
+			break
+		elif cmd[:2] == ":w":
+			print(f"You have found {len(found_words)}/{len(possible_words)} words: \n {', '.join(found_words)}")
+		elif cmd[:2] == ":c":
+			while True:
+				word = random.choice(possible_words)
+				if word not in found_words:
+					print(word)
+					found_words.append(word)
+					break
+		elif cmd[:2] == ":a":
+			print(" ".join(possible_words))
+		else:
+			guess = cmd
+			if len(guess)<min_word_len:
+				print("Too short")
+			elif not all(char in letters_lower for char in guess):
+				print("Not all letters in\n", puzzle_repr)
+			elif req_letter not in guess:
+				print(f'Missing center letter "{req_letter.upper()}"')
+			elif guess not in possible_words:
+				print("Not in word list")
+			elif guess in found_words:
+				print("Already found")
+			else:
+				print("✓")
+				found_words.append(guess)
+
+if __name__ == "__main__":
+	main()
