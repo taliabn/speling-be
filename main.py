@@ -2,6 +2,9 @@ from sortedcontainers import SortedList
 from english_words import get_english_words_set
 import string
 import random
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 
 
 def load_web2_words():
@@ -11,6 +14,21 @@ def load_words_from_file(file='words_list.txt'):
 	with open(file) as word_file:
 		valid_words = set(word_file.read().split())
 	return valid_words
+
+# hopefully this is legal...
+def steal_nyt_puzzle(url="https://www.nytimes.com/puzzles/spelling-bee"):
+	driver = webdriver.Firefox()
+	try:
+		driver.get(url)
+		time.sleep(1)
+		eles = driver.find_elements(By.CLASS_NAME, "cell-letter")
+		letters = [ele.get_attribute("innerHTML").upper() for ele in eles]
+	except Exception as e:
+		print(f"error scraping NYT page: \n {e}\n\nProceeding with a random puzzle instead")
+		letters = gen_random_puzzle()
+	finally:
+		driver.close()
+	return letters
 
 def gen_random_puzzle():
 	vowels = ['A', 'E', 'I', 'O', 'U']
@@ -23,7 +41,11 @@ def gen_random_puzzle():
 def main():
 	print("Welcome to Speling Be!")
 	# generate puzzle
-	letters = gen_random_puzzle()
+	use_nyt = input("Would you like to play today's NYT puzzle instead of a randomly generated one? (y/n)\n> ")
+	if "y" in use_nyt.lower():
+		letters = steal_nyt_puzzle()
+	else:
+		letters = gen_random_puzzle()
 	req_letter = letters[0].lower()
 	letters_lower = [l.lower() for l in letters]
 	puzzle_repr = f"\t  {letters[3]}  {letters[1]}\n\t{letters[2]}  {letters[0]}  {letters[4]}\n\t  {letters[5]}  {letters[6]}"
