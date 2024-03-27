@@ -91,7 +91,6 @@ def main():
 			elif guess in found_words:
 				print("Already found")
 			else:
-				print("✓")
 				found_words.append(guess)
 
 if __name__ == "__main__":
