@@ -16,7 +16,7 @@ def load_words_from_file(file='words_list.txt'):
 	return valid_words
 
 # hopefully this is legal...
-def steal_nyt_puzzle(url="https://www.nytimes.com/puzzles/spelling-bee"):
+def scrape_nyt_puzzle(url="https://www.nytimes.com/puzzles/spelling-bee"):
 	driver = webdriver.Firefox()
 	try:
 		driver.get(url)
@@ -38,20 +38,28 @@ def gen_random_puzzle():
 	letters = list(set(letters))[:7]
 	return letters
 
+def gen_pangram_puzzle(valid_words):
+	# TODO:cache these
+	candidates = [word for word in valid_words if len(set(word))==7]
+	print(len(candidates))
+	pangram = random.choice(candidates)
+	letters = [l.upper() for l in set(pangram)]
+	random.shuffle(letters)
+	return letters
+
 def main():
 	print("Welcome to Speling Be!")
 	# generate puzzle
+	valid_words = load_words_from_file("words_list.txt")
 	use_nyt = input("Would you like to play today's NYT puzzle instead of a randomly generated one? (y/n)\n> ")
 	if "y" in use_nyt.lower():
-		letters = steal_nyt_puzzle()
+		letters = scrape_nyt_puzzle()
 	else:
-		letters = gen_random_puzzle()
+		letters = gen_pangram_puzzle(valid_words)
 	req_letter = letters[0].lower()
 	letters_lower = [l.lower() for l in letters]
 	puzzle_repr = f"\t  {letters[3]}  {letters[1]}\n\t{letters[2]}  {letters[0]}  {letters[4]}\n\t  {letters[5]}  {letters[6]}"
 	# get solutions
-	# valid_words = load_web2_words()
-	valid_words = load_words_from_file("words_list.txt")
 	min_word_len = 4
 	possible_words = SortedList([word for word in valid_words if (len(word)>=min_word_len and all(char in letters_lower for char in word) and req_letter in word)])
 	found_words = []
@@ -68,7 +76,7 @@ def main():
 			print("Goodbye!")
 			break
 		elif cmd[:2] == ":w":
-			print(f"You have found {len(found_words)}/{len(possible_words)} words: \n {', '.join(found_words)}")
+			print(f"You have found {len(found_words)}/{len(possible_words)} words:\n{', '.join(found_words)}")
 		elif cmd[:2] == ":c":
 			while True:
 				word = random.choice(possible_words)
